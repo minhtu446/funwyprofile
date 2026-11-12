@@ -103,7 +103,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 14px 20px 4px;
+      padding: 10px 20px 3vh;
     }
 
     .avatar-wrap {
@@ -191,13 +191,6 @@
       border: 1px solid rgba(255, 255, 255, 0.92);
       box-shadow: 0 3px 8px rgba(70, 110, 165, 0.12);
     }
-    .t-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--offline);
-      flex: none;
-      transition: background 0.4s;
-    }
     .t-label {
       font-size: 0.84rem;
       font-weight: 700;
@@ -226,7 +219,7 @@
       flex: 0 0 auto;
       display: flex;
       justify-content: center;
-      padding: 4px 20px 16px;
+      padding: 4px 20px 6vh;
     }
     .card {
       width: 100%;
@@ -312,7 +305,19 @@
     }
     .secret:active { transform: scale(0.98); }
 
-    /* ---- Screen shake on click (single shake + sound) ---- */
+    /* ---- Hidden YouTube player (music on click) ---- */
+    #yt-player {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      width: 200px;
+      height: 112px;
+      opacity: 0.01;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* ---- Screen shake on click (single shake + music) ---- */
     body.shake-a { animation: pageShakeA 0.55s cubic-bezier(.36,.07,.19,.97) both; }
     body.shake-b { animation: pageShakeB 0.6s  cubic-bezier(.36,.07,.19,.97) both; }
     @keyframes pageShakeA {
@@ -365,7 +370,6 @@
       }
       .t-inner { padding: 7px 13px; }
       .t-label { font-size: 0.75rem; }
-      .t-dot { width: 8px; height: 8px; }
       .secret { width: 100%; height: 42px; }
     }
 
@@ -495,7 +499,6 @@
       <!-- thought bubble = custom status -->
       <div class="thought" aria-live="polite">
         <div class="t-inner">
-          <span class="t-dot" id="thought-dot"></span>
           <span class="t-label" id="thought-label">...</span>
         </div>
       </div>
@@ -543,6 +546,9 @@
       </div>
     </section>
   </div>
+
+  <!-- Hidden YouTube player: music starts when the locked name is clicked -->
+  <div id="yt-player" aria-hidden="true"></div>
 
   <script>
     /* ================================================================
@@ -620,60 +626,64 @@
     })();
 
     /* ================================================================
-       2. LOCKED NAME — click => one screen shake + "denied" sound
+       2. LOCKED NAME — click => one screen shake + Better Days music
     ================================================================ */
     (function secretLock() {
       const secret = document.getElementById("secret");
       let busy = false;
       let alt = false;
-      let audioCtx = null;
+      let ytPlayer = null;
+      let wantMusic = false;
 
-      function playDenied() {
+      /* Hidden YouTube music: LAKEY INSPIRED - Better Days (1 Hour) */
+      window.onYouTubeIframeAPIReady = function () {
+        ytPlayer = new YT.Player("yt-player", {
+          videoId: "DkhUCvm1jQc",
+          playerVars: {
+            autoplay: 0,
+            controls: 0,
+            loop: 1,
+            playlist: "DkhUCvm1jQc",
+            playsinline: 1,
+            rel: 0,
+            modestbranding: 1,
+            iv_load_policy: 3,
+          },
+          events: {
+            onReady: (e) => {
+              e.target.setVolume(70);
+              if (wantMusic) startMusic();
+            },
+            onStateChange: (e) => {
+              /* safety loop — replay if it ever ends */
+              if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
+            },
+          },
+        });
+      };
+
+      /* Load the IFrame API only after our callback is registered */
+      (function loadYT() {
+        const s = document.createElement("script");
+        s.src = "https://www.youtube.com/iframe_api";
+        s.async = true;
+        document.head.appendChild(s);
+      })();
+
+      function startMusic() {
+        if (!ytPlayer) { wantMusic = true; return; }
         try {
-          audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-          if (audioCtx.state === "suspended") audioCtx.resume();
-          const t = audioCtx.currentTime;
-
-          const osc = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          const lp = audioCtx.createBiquadFilter();
-          osc.type = "sawtooth";
-          osc.frequency.setValueAtTime(130, t);
-          osc.frequency.exponentialRampToValueAtTime(55, t + 0.22);
-          g.gain.setValueAtTime(0.0001, t);
-          g.gain.exponentialRampToValueAtTime(0.16, t + 0.015);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
-          lp.type = "lowpass";
-          lp.frequency.value = 900;
-          osc.connect(g);
-          g.connect(lp);
-          lp.connect(audioCtx.destination);
-          osc.start(t);
-          osc.stop(t + 0.28);
-
-          const len = Math.floor(audioCtx.sampleRate * 0.06);
-          const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-          const data = buf.getChannelData(0);
-          for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
-          const src = audioCtx.createBufferSource();
-          src.buffer = buf;
-          const hp = audioCtx.createBiquadFilter();
-          hp.type = "highpass";
-          hp.frequency.value = 1400;
-          const ng = audioCtx.createGain();
-          ng.gain.value = 0.07;
-          src.connect(hp);
-          hp.connect(ng);
-          ng.connect(audioCtx.destination);
-          src.start(t);
-        } catch { /* audio unavailable — shake still runs */ }
+          ytPlayer.unMute();
+          ytPlayer.setVolume(70);
+          ytPlayer.playVideo();
+        } catch { /* player not ready yet */ }
       }
 
       secret.addEventListener("click", () => {
         if (busy) return;
         busy = true;
 
-        playDenied();
+        startMusic();
 
         document.body.classList.remove("shake-a", "shake-b");
         void document.body.offsetWidth;
@@ -697,7 +707,6 @@
       const avatarEl = $("avatar");
       const decoEl = $("decoration");
       const dotEl = $("status-dot");
-      const thoughtDot = $("thought-dot");
       const thoughtLabel = $("thought-label");
       const nameEl = $("display-name");
 
@@ -728,7 +737,6 @@
       function setStatus(status) {
         const color = COLORS[status] || COLORS.offline;
         dotEl.style.background = color;
-        thoughtDot.style.background = color;
       }
 
       function defaultAvatar(id) {
