@@ -365,7 +365,8 @@
       animation: floatIn 1s 0.42s cubic-bezier(.2,.7,.2,1) both;
     }
 
-    /* Black vinyl disc, hand-drawn */
+    /* Black vinyl disc, hand-drawn — outer keeps hover/scale,
+       inner layer spins (no transform conflicts) */
     .disc {
       --size: 120px;
       width: var(--size);
@@ -375,6 +376,16 @@
       padding: 0;
       border-radius: 50%;
       cursor: pointer;
+      box-shadow: 0 12px 26px rgba(20, 30, 50, 0.4);
+      transition: transform 0.2s;
+    }
+    .disc:hover { transform: scale(1.05); }
+    .disc:active { transform: scale(0.96); }
+
+    .disc-inner {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
       background:
         repeating-radial-gradient(circle at 50% 50%,
           rgba(255, 255, 255, 0.055) 0 1.5px,
@@ -383,15 +394,11 @@
           #2a2e38 0%,
           #14161d 55%,
           #0b0d12 100%);
-      box-shadow:
-        0 12px 26px rgba(20, 30, 50, 0.4),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-      transition: transform 0.2s;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+      will-change: transform;
     }
-    .disc:hover { transform: scale(1.05); }
-    .disc:active { transform: scale(0.96); }
 
-    .disc.spinning { animation: spin 2.2s linear infinite; }
+    .disc.spinning .disc-inner { animation: spin 2s linear infinite; }
     @keyframes spin { to { transform: rotate(1turn); } }
 
     /* static light streaks — stay put while the vinyl spins beneath */
@@ -636,7 +643,6 @@
       .cloud-wrap { animation-duration: 400s !important; }
       .avatar-wrap, .profile-name, .card, .player { animation: none; }
       .t-inner { animation: none; }
-      .disc.spinning { animation: none; }
       body.shake-a, body.shake-b { animation: none; }
     }
   </style>
@@ -828,10 +834,12 @@
   <!-- ===== VINYL PLAYER — fixed bottom-right corner ===== -->
   <div class="player">
     <button class="disc" id="disc" type="button" aria-pressed="false" aria-label="Play or pause music">
-      <span class="disc-label">
-        <img id="disc-img" src="https://i.ytimg.com/vi/DkhUCvm1jQc/mqdefault.jpg" alt="" />
+      <span class="disc-inner">
+        <span class="disc-label">
+          <img id="disc-img" src="https://i.ytimg.com/vi/DkhUCvm1jQc/mqdefault.jpg" alt="" />
+        </span>
+        <span class="disc-hole"></span>
       </span>
-      <span class="disc-hole"></span>
     </button>
     <input class="volume" id="volume" type="range" min="0" max="100" value="70" style="--fill: 70%" aria-label="Music volume" />
   </div>
@@ -944,6 +952,37 @@
       let memePlayer = null;
       let memeWanted = false;
 
+      /* Spinning — CSS animation with a JS rAF fallback for browsers
+         that disable CSS animations (reduced motion) */
+      const discInner = disc.querySelector(".disc-inner");
+      const reducedMotion =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let rafId = null;
+      let rotDeg = 0;
+      let lastT = 0;
+
+      function spinLoop(t) {
+        if (lastT) {
+          const dt = Math.min((t - lastT) / 1000, 0.1);
+          rotDeg = (rotDeg + 180 * dt) % 360; /* 2s per turn */
+          discInner.style.transform = "rotate(" + rotDeg + "deg)";
+        }
+        lastT = t;
+        rafId = requestAnimationFrame(spinLoop);
+      }
+
+      function setSpin(on) {
+        disc.setAttribute("aria-pressed", on ? "true" : "false");
+        if (reducedMotion) {
+          if (on && rafId == null) { lastT = 0; rafId = requestAnimationFrame(spinLoop); }
+          if (!on && rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
+        } else {
+          disc.classList.toggle("spinning", on);
+          if (!on) discInner.style.transform = "";
+        }
+      }
+
       /* Synthesized "access denied" sound effect — no external file needed */
       function playDenied() {
         try {
@@ -1051,15 +1090,15 @@
               /* keep the vinyl spinning in sync with playback */
               if (e.data === YT.PlayerState.PLAYING) {
                 playing = true;
-                disc.classList.add("spinning");
-                disc.setAttribute("aria-pressed", "true");
-              } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+                setSpin(true);
+              } else if (e.data === YT.PlayerState.PAUSED) {
                 playing = false;
-                disc.classList.remove("spinning");
-                disc.setAttribute("aria-pressed", "false");
+                setSpin(false);
+              } else if (e.data === YT.PlayerState.ENDED) {
+                /* safety loop — replay immediately, keep spinning */
+                playing = false;
+                e.target.playVideo();
               }
-              /* safety loop — replay if it ever ends */
-              if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
             },
           },
         });
@@ -1083,10 +1122,15 @@
       }
 
       disc.addEventListener("click", () => {
-        if (!ytPlayer) { wantMusic = !wantMusic; return; }
+        if (!ytPlayer) {
+          /* player still loading — spin optimistically, play when ready */
+          wantMusic = !wantMusic;
+          setSpin(wantMusic);
+          return;
+        }
         try {
-          if (playing) ytPlayer.pauseVideo();
-          else playMusic();
+          if (playing) { setSpin(false); ytPlayer.pauseVideo(); }
+          else { setSpin(true); playMusic(); }
         } catch { /* ignore */ }
       });
 
