@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>-FuNwy_</title>
-  <meta name="description" content="About me — soft sky, lifelike drifting clouds, live Discord profile." />
+  <meta name="description" content="About me — soft sky, lifelike drifting clouds, live Discord profile and a spinning CD player." />
   <meta property="og:title" content="-FuNwy_" />
-  <meta property="og:description" content="About me — soft sky, lifelike drifting clouds, live Discord profile." />
+  <meta property="og:description" content="About me — soft sky, lifelike drifting clouds, live Discord profile and a spinning CD player." />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -97,20 +97,19 @@
 
     /* ============ HERO — Discord profile ============ */
     .hero {
-      flex: 1 1 auto;
-      min-height: 0;
+      flex: 0 0 auto;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 10px 20px 3vh;
+      padding: 4vh 20px 1vh;
     }
 
     .avatar-wrap {
       position: relative;
-      width: 152px;
-      height: 152px;
-      margin-bottom: 14px;
+      width: 140px;
+      height: 140px;
+      margin-bottom: 12px;
       animation: floatIn 1s cubic-bezier(.2,.7,.2,1) both;
     }
     #avatar {
@@ -134,8 +133,8 @@
       position: absolute;
       right: 4px;
       bottom: 6px;
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       border: 5px solid #fff;
       background: var(--offline);
@@ -214,17 +213,20 @@
       to   { opacity: 1; transform: none; }
     }
 
-    /* ============ CARD ============ */
-    .card-zone {
-      flex: 0 0 auto;
+    /* ============ STAGE — info card (left) + CD player (right) ============ */
+    .stage {
+      flex: 1 1 auto;
+      min-height: 0;
       display: flex;
+      align-items: center;
       justify-content: center;
-      padding: 4px 20px 6vh;
+      gap: 36px;
+      padding: 8px 20px 4vh;
     }
+
     .card {
-      width: 100%;
-      max-width: 470px;
-      padding: 3px 28px;
+      width: min(400px, 100%);
+      padding: 3px 26px;
       background: var(--glass);
       border: 1px solid var(--glass-border);
       border-radius: 24px;
@@ -305,7 +307,146 @@
     }
     .secret:active { transform: scale(0.98); }
 
-    /* ---- Hidden YouTube player (music on click) ---- */
+    /* ============ CD PLAYER — hand-drawn spinning disc ============ */
+    .player {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      animation: floatIn 1s 0.42s cubic-bezier(.2,.7,.2,1) both;
+    }
+
+    .disc {
+      --size: 148px;
+      width: var(--size);
+      height: var(--size);
+      position: relative;
+      border: none;
+      padding: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      background:
+        repeating-radial-gradient(circle at 50% 50%,
+          rgba(255, 255, 255, 0.12) 0 1.5px,
+          rgba(255, 255, 255, 0) 1.5px 5px),
+        conic-gradient(from 15deg,
+          #eef4fb, #cfe3f8 11%, #f8e7f2 24%, #e2f6ec 37%,
+          #f6efd8 50%, #dcd6f6 63%, #f0e2ef 76%, #d8ecf8 89%, #eef4fb);
+      box-shadow:
+        0 14px 30px rgba(70, 110, 165, 0.28),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+      transition: transform 0.2s;
+    }
+    .disc:hover { transform: scale(1.04); }
+    .disc:active { transform: scale(0.96); }
+
+    .disc.spinning { animation: spin 2.2s linear infinite; }
+    @keyframes spin { to { transform: rotate(1turn); } }
+
+    /* static light reflection — stays put while the disc spins beneath it */
+    .disc::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(125deg,
+        rgba(255, 255, 255, 0) 32%,
+        rgba(255, 255, 255, 0.5) 46%,
+        rgba(255, 255, 255, 0) 58%,
+        rgba(255, 255, 255, 0.28) 70%,
+        rgba(255, 255, 255, 0) 80%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* play hint — appears on hover while paused */
+    .disc::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-30%, -50%);
+      border-style: solid;
+      border-width: 10px 0 10px 16px;
+      border-color: transparent transparent transparent rgba(61, 134, 240, 0.9);
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
+      z-index: 4;
+      filter: drop-shadow(0 2px 5px rgba(255, 255, 255, 0.7));
+    }
+    .disc:not(.spinning):hover::before { opacity: 1; }
+
+    /* center label = live Discord avatar */
+    .disc-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 56px;
+      height: 56px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 10px rgba(70, 110, 165, 0.25);
+      background: #dceeff;
+      z-index: 2;
+    }
+    .disc-label img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .disc-hole {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 11px;
+      height: 11px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #fdf8f0;
+      border: 2px solid rgba(70, 110, 165, 0.35);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      z-index: 3;
+    }
+
+    /* volume slider below the disc */
+    .volume {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 140px;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+        var(--accent) var(--fill, 70%),
+        rgba(255, 255, 255, 0.75) var(--fill, 70%));
+      outline: none;
+      box-shadow: 0 2px 8px rgba(70, 110, 165, 0.15);
+      cursor: pointer;
+    }
+    .volume::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 2px 8px rgba(61, 134, 240, 0.45);
+    }
+    .volume::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 2px 8px rgba(61, 134, 240, 0.45);
+    }
+
+    /* ---- Hidden YouTube player (music for the CD) ---- */
     #yt-player {
       position: fixed;
       right: 0;
@@ -317,7 +458,7 @@
       z-index: -1;
     }
 
-    /* ---- Screen shake on click (single shake + music) ---- */
+    /* ---- Screen shake on click (single shake + sound effect) ---- */
     body.shake-a { animation: pageShakeA 0.55s cubic-bezier(.36,.07,.19,.97) both; }
     body.shake-b { animation: pageShakeB 0.6s  cubic-bezier(.36,.07,.19,.97) both; }
     @keyframes pageShakeA {
@@ -344,7 +485,7 @@
     /* Short screens: shrink gracefully, still one screen */
     @media (max-height: 640px) {
       .hero { padding-top: 8px; }
-      .avatar-wrap { width: 108px; height: 108px; margin-bottom: 8px; }
+      .avatar-wrap { width: 104px; height: 104px; margin-bottom: 6px; }
       #status-dot { width: 24px; height: 24px; border-width: 4px; }
       .thought { top: -38px; right: -66px; }
       .t-inner { padding: 6px 12px; }
@@ -353,13 +494,17 @@
       .card { padding: 1px 20px; }
       .row { padding: 10px 0; }
       .row-value { font-size: 0.92rem; }
-      .card-zone { padding-bottom: 10px; }
+      .stage { gap: 20px; padding-bottom: 10px; }
+      .disc { --size: 108px; }
+      .disc-label { width: 42px; height: 42px; }
+      .volume { width: 120px; height: 5px; }
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 620px) {
+      .stage { flex-direction: column; gap: 18px; padding: 6px 16px 3vh; }
       .card { padding: 2px 18px; }
-      .row { padding: 13px 0; }
-      .avatar-wrap { width: 118px; height: 118px; }
+      .row { padding: 12px 0; }
+      .avatar-wrap { width: 112px; height: 112px; }
       #status-dot { width: 25px; height: 25px; border-width: 4px; right: 3px; bottom: 4px; }
       /* bubble above avatar, centered — no sideways overflow */
       .thought {
@@ -370,13 +515,17 @@
       }
       .t-inner { padding: 7px 13px; }
       .t-label { font-size: 0.75rem; }
+      .disc { --size: 118px; }
+      .disc-label { width: 46px; height: 46px; }
+      .volume { width: 150px; }
       .secret { width: 100%; height: 42px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       .cloud-wrap { animation-duration: 400s !important; }
-      .avatar-wrap, .profile-name, .card { animation: none; }
+      .avatar-wrap, .profile-name, .card, .player { animation: none; }
       .t-inner { animation: none; }
+      .disc.spinning { animation: none; }
       body.shake-a, body.shake-b { animation: none; }
     }
   </style>
@@ -507,8 +656,8 @@
     <div class="profile-name" id="display-name">-FuNwy_</div>
   </header>
 
-  <!-- ===== INFO CARD ===== -->
-  <div class="card-zone">
+  <!-- ===== STAGE — INFO CARD (left) + CD PLAYER (right) ===== -->
+  <div class="stage">
     <section class="card">
       <div class="row">
         <span class="row-label">Name</span>
@@ -545,9 +694,18 @@
         </span>
       </div>
     </section>
+
+    <!-- Hand-drawn spinning CD: click to play/pause, slider below for volume -->
+    <div class="player">
+      <button class="disc" id="disc" type="button" aria-pressed="false" aria-label="Play or pause music">
+        <span class="disc-label"><img id="disc-img" alt="" /></span>
+        <span class="disc-hole"></span>
+      </button>
+      <input class="volume" id="volume" type="range" min="0" max="100" value="70" style="--fill: 70%" aria-label="Music volume" />
+    </div>
   </div>
 
-  <!-- Hidden YouTube player: music starts when the locked name is clicked -->
+  <!-- Hidden YouTube player: music for the CD player -->
   <div id="yt-player" aria-hidden="true"></div>
 
   <script>
@@ -626,14 +784,63 @@
     })();
 
     /* ================================================================
-       2. LOCKED NAME — click => one screen shake + Better Days music
+       2. LOCKED NAME + CD PLAYER
+          - lock click: one screen shake + synthesized denied sound
+          - disc click: play/pause Better Days, disc spins while playing
+          - slider: live volume
     ================================================================ */
-    (function secretLock() {
+    (function lockAndPlayer() {
       const secret = document.getElementById("secret");
+      const disc = document.getElementById("disc");
+      const volume = document.getElementById("volume");
       let busy = false;
       let alt = false;
+      let audioCtx = null;
       let ytPlayer = null;
       let wantMusic = false;
+      let playing = false;
+
+      /* Synthesized "access denied" sound effect — no external file needed */
+      function playDenied() {
+        try {
+          audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === "suspended") audioCtx.resume();
+          const t = audioCtx.currentTime;
+
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          const lp = audioCtx.createBiquadFilter();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(130, t);
+          osc.frequency.exponentialRampToValueAtTime(55, t + 0.22);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.16, t + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+          lp.type = "lowpass";
+          lp.frequency.value = 900;
+          osc.connect(g);
+          g.connect(lp);
+          lp.connect(audioCtx.destination);
+          osc.start(t);
+          osc.stop(t + 0.28);
+
+          const len = Math.floor(audioCtx.sampleRate * 0.06);
+          const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+          const src = audioCtx.createBufferSource();
+          src.buffer = buf;
+          const hp = audioCtx.createBiquadFilter();
+          hp.type = "highpass";
+          hp.frequency.value = 1400;
+          const ng = audioCtx.createGain();
+          ng.gain.value = 0.07;
+          src.connect(hp);
+          hp.connect(ng);
+          ng.connect(audioCtx.destination);
+          src.start(t);
+        } catch { /* audio unavailable — shake still runs */ }
+      }
 
       /* Hidden YouTube music: LAKEY INSPIRED - Better Days (1 Hour) */
       window.onYouTubeIframeAPIReady = function () {
@@ -651,10 +858,23 @@
           },
           events: {
             onReady: (e) => {
-              e.target.setVolume(70);
-              if (wantMusic) startMusic();
+              e.target.setVolume(volume.value);
+              if (wantMusic) {
+                wantMusic = false;
+                playMusic();
+              }
             },
             onStateChange: (e) => {
+              /* keep the disc spinning in sync with playback */
+              if (e.data === YT.PlayerState.PLAYING) {
+                playing = true;
+                disc.classList.add("spinning");
+                disc.setAttribute("aria-pressed", "true");
+              } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+                playing = false;
+                disc.classList.remove("spinning");
+                disc.setAttribute("aria-pressed", "false");
+              }
               /* safety loop — replay if it ever ends */
               if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
             },
@@ -670,20 +890,33 @@
         document.head.appendChild(s);
       })();
 
-      function startMusic() {
-        if (!ytPlayer) { wantMusic = true; return; }
+      function playMusic() {
+        if (!ytPlayer) return;
         try {
           ytPlayer.unMute();
-          ytPlayer.setVolume(70);
+          ytPlayer.setVolume(volume.value);
           ytPlayer.playVideo();
         } catch { /* player not ready yet */ }
       }
+
+      disc.addEventListener("click", () => {
+        if (!ytPlayer) { wantMusic = !wantMusic; return; }
+        try {
+          if (playing) ytPlayer.pauseVideo();
+          else playMusic();
+        } catch { /* ignore */ }
+      });
+
+      volume.addEventListener("input", () => {
+        volume.style.setProperty("--fill", volume.value + "%");
+        try { if (ytPlayer) ytPlayer.setVolume(volume.value); } catch { /* ignore */ }
+      });
 
       secret.addEventListener("click", () => {
         if (busy) return;
         busy = true;
 
-        startMusic();
+        playDenied();
 
         document.body.classList.remove("shake-a", "shake-b");
         void document.body.offsetWidth;
@@ -707,6 +940,7 @@
       const avatarEl = $("avatar");
       const decoEl = $("decoration");
       const dotEl = $("status-dot");
+      const discImg = $("disc-img");
       const thoughtLabel = $("thought-label");
       const nameEl = $("display-name");
 
@@ -768,6 +1002,7 @@
 
         const url = avatarURL(u);
         if (avatarEl.src !== url) avatarEl.src = url;
+        if (discImg.src !== url) discImg.src = url;
         if (firstPresence) {
           document.getElementById("favicon").href = url;
           firstPresence = false;
