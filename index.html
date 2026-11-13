@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>-FuNwy_</title>
-  <meta name="description" content="About me — soft sky, lifelike drifting clouds, live Discord profile and a spinning CD player." />
+  <meta name="description" content="About me — soft sky, lifelike drifting clouds, live Discord profile and a spinning vinyl player." />
   <meta property="og:title" content="-FuNwy_" />
-  <meta property="og:description" content="About me — soft sky, lifelike drifting clouds, live Discord profile and a spinning CD player." />
+  <meta property="og:description" content="About me — soft sky, lifelike drifting clouds, live Discord profile and a spinning vinyl player." />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -102,7 +102,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 4vh 20px 1vh;
+      /* top padding keeps the thought bubble fully visible */
+      padding: clamp(36px, 5vh, 64px) 20px 1vh;
     }
 
     .avatar-wrap {
@@ -129,24 +130,69 @@
       pointer-events: none;
       display: none;
     }
+
+    /* ---- Status badge — Discord-style shapes + hover tooltip ---- */
     #status-dot {
       position: absolute;
-      right: 4px;
-      bottom: 6px;
-      width: 28px;
-      height: 28px;
+      right: 2px;
+      bottom: 4px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border: 5px solid #fff;
-      background: var(--offline);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-      transition: background 0.4s;
+      background: transparent;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+      display: flex;
+      cursor: default;
+    }
+    #status-dot svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 50%;
+    }
+    .status-icon { display: none; }
+    .status-online .icon-online,
+    .status-idle .icon-idle,
+    .status-dnd .icon-dnd,
+    .status-offline .icon-offline { display: block; }
+
+    .status-tip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      right: -6px;
+      background: rgba(24, 30, 44, 0.92);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 5px 9px;
+      border-radius: 7px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(4px);
+      transition: opacity 0.18s, transform 0.18s;
+      z-index: 20;
+    }
+    .status-tip::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      right: 12px;
+      border: 4px solid transparent;
+      border-top-color: rgba(24, 30, 44, 0.92);
+    }
+    #status-dot:hover .status-tip {
+      opacity: 1;
+      transform: none;
     }
 
-    /* ---- Thought bubble = custom status ---- */
+    /* ---- Thought bubble = custom status (always fully visible) ---- */
     .thought {
       position: absolute;
-      top: -44px;
-      right: -78px;
+      top: -30px;
+      right: -74px;
       z-index: 12;
     }
     .t-inner {
@@ -213,15 +259,14 @@
       to   { opacity: 1; transform: none; }
     }
 
-    /* ============ STAGE — info card (left) + CD player (right) ============ */
-    .stage {
+    /* ============ INFO CARD — centered in the middle ============ */
+    .card-zone {
       flex: 1 1 auto;
       min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 36px;
-      padding: 8px 20px 4vh;
+      padding: 8px 20px 24px;
     }
 
     .card {
@@ -307,18 +352,22 @@
     }
     .secret:active { transform: scale(0.98); }
 
-    /* ============ CD PLAYER — hand-drawn spinning disc ============ */
+    /* ============ VINYL PLAYER — fixed bottom-right corner ============ */
     .player {
-      flex: none;
+      position: fixed;
+      right: 18px;
+      bottom: 14px;
+      z-index: 30;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
       animation: floatIn 1s 0.42s cubic-bezier(.2,.7,.2,1) both;
     }
 
+    /* Black vinyl disc, hand-drawn */
     .disc {
-      --size: 148px;
+      --size: 120px;
       width: var(--size);
       height: var(--size);
       position: relative;
@@ -328,34 +377,35 @@
       cursor: pointer;
       background:
         repeating-radial-gradient(circle at 50% 50%,
-          rgba(255, 255, 255, 0.12) 0 1.5px,
+          rgba(255, 255, 255, 0.055) 0 1.5px,
           rgba(255, 255, 255, 0) 1.5px 5px),
-        conic-gradient(from 15deg,
-          #eef4fb, #cfe3f8 11%, #f8e7f2 24%, #e2f6ec 37%,
-          #f6efd8 50%, #dcd6f6 63%, #f0e2ef 76%, #d8ecf8 89%, #eef4fb);
+        radial-gradient(circle at 50% 50%,
+          #2a2e38 0%,
+          #14161d 55%,
+          #0b0d12 100%);
       box-shadow:
-        0 14px 30px rgba(70, 110, 165, 0.28),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+        0 12px 26px rgba(20, 30, 50, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.14);
       transition: transform 0.2s;
     }
-    .disc:hover { transform: scale(1.04); }
+    .disc:hover { transform: scale(1.05); }
     .disc:active { transform: scale(0.96); }
 
     .disc.spinning { animation: spin 2.2s linear infinite; }
     @keyframes spin { to { transform: rotate(1turn); } }
 
-    /* static light reflection — stays put while the disc spins beneath it */
+    /* static light streaks — stay put while the vinyl spins beneath */
     .disc::after {
       content: "";
       position: absolute;
       inset: 0;
       border-radius: 50%;
       background: linear-gradient(125deg,
-        rgba(255, 255, 255, 0) 32%,
-        rgba(255, 255, 255, 0.5) 46%,
-        rgba(255, 255, 255, 0) 58%,
-        rgba(255, 255, 255, 0.28) 70%,
-        rgba(255, 255, 255, 0) 80%);
+        rgba(255, 255, 255, 0) 30%,
+        rgba(255, 255, 255, 0.16) 44%,
+        rgba(255, 255, 255, 0) 56%,
+        rgba(255, 255, 255, 0.1) 68%,
+        rgba(255, 255, 255, 0) 78%);
       pointer-events: none;
       z-index: 1;
     }
@@ -368,29 +418,29 @@
       left: 50%;
       transform: translate(-30%, -50%);
       border-style: solid;
-      border-width: 10px 0 10px 16px;
-      border-color: transparent transparent transparent rgba(61, 134, 240, 0.9);
+      border-width: 9px 0 9px 15px;
+      border-color: transparent transparent transparent rgba(255, 255, 255, 0.9);
       opacity: 0;
       transition: opacity 0.25s;
       pointer-events: none;
       z-index: 4;
-      filter: drop-shadow(0 2px 5px rgba(255, 255, 255, 0.7));
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
     }
     .disc:not(.spinning):hover::before { opacity: 1; }
 
-    /* center label = live Discord avatar */
+    /* center label = Better Days cover art */
     .disc-label {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 56px;
-      height: 56px;
+      width: 46px;
+      height: 46px;
       transform: translate(-50%, -50%);
       border-radius: 50%;
       overflow: hidden;
-      border: 3px solid #fff;
-      box-shadow: 0 2px 10px rgba(70, 110, 165, 0.25);
-      background: #dceeff;
+      border: 2.5px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 0 3px rgba(11, 13, 18, 0.55), 0 2px 8px rgba(0, 0, 0, 0.5);
+      background: #14161d;
       z-index: 2;
     }
     .disc-label img {
@@ -404,13 +454,12 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 11px;
-      height: 11px;
+      width: 9px;
+      height: 9px;
       transform: translate(-50%, -50%);
       border-radius: 50%;
-      background: #fdf8f0;
-      border: 2px solid rgba(70, 110, 165, 0.35);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      background: #0b0d12;
+      border: 2px solid rgba(255, 255, 255, 0.5);
       z-index: 3;
     }
 
@@ -418,35 +467,35 @@
     .volume {
       -webkit-appearance: none;
       appearance: none;
-      width: 140px;
+      width: 120px;
       height: 6px;
       border-radius: 999px;
       background: linear-gradient(90deg,
         var(--accent) var(--fill, 70%),
         rgba(255, 255, 255, 0.75) var(--fill, 70%));
       outline: none;
-      box-shadow: 0 2px 8px rgba(70, 110, 165, 0.15);
+      box-shadow: 0 2px 8px rgba(70, 110, 165, 0.25);
       cursor: pointer;
     }
     .volume::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       background: #fff;
       border: 3px solid var(--accent);
       box-shadow: 0 2px 8px rgba(61, 134, 240, 0.45);
     }
     .volume::-moz-range-thumb {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border-radius: 50%;
       background: #fff;
       border: 3px solid var(--accent);
       box-shadow: 0 2px 8px rgba(61, 134, 240, 0.45);
     }
 
-    /* ---- Hidden YouTube player (music for the CD) ---- */
+    /* ---- Hidden YouTube player (music for the vinyl) ---- */
     #yt-player {
       position: fixed;
       right: 0;
@@ -457,6 +506,62 @@
       pointer-events: none;
       z-index: -1;
     }
+
+    /* ---- Rick roll overlay ---- */
+    .meme {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 14, 24, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s;
+    }
+    .meme.open { opacity: 1; pointer-events: auto; }
+    .meme-box {
+      position: relative;
+      width: min(640px, 92vw);
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      transform: scale(0.9);
+      transition: transform 0.35s;
+    }
+    .meme.open .meme-box { transform: scale(1); }
+    #meme-player, #meme-player iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .meme-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      z-index: 5;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 1.3rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .meme-close:hover { background: rgba(255, 255, 255, 0.3); }
 
     /* ---- Screen shake on click (single shake + sound effect) ---- */
     body.shake-a { animation: pageShakeA 0.55s cubic-bezier(.36,.07,.19,.97) both; }
@@ -484,41 +589,47 @@
 
     /* Short screens: shrink gracefully, still one screen */
     @media (max-height: 640px) {
-      .hero { padding-top: 8px; }
+      .hero { padding-top: 36px; }
       .avatar-wrap { width: 104px; height: 104px; margin-bottom: 6px; }
-      #status-dot { width: 24px; height: 24px; border-width: 4px; }
-      .thought { top: -38px; right: -66px; }
+      #status-dot { width: 25px; height: 25px; border-width: 4px; right: 1px; bottom: 2px; }
+      .thought { top: -28px; right: -62px; }
       .t-inner { padding: 6px 12px; }
       .t-label { font-size: 0.74rem; }
       .profile-name { font-size: 1.15rem; }
       .card { padding: 1px 20px; }
       .row { padding: 10px 0; }
       .row-value { font-size: 0.92rem; }
-      .stage { gap: 20px; padding-bottom: 10px; }
-      .disc { --size: 108px; }
-      .disc-label { width: 42px; height: 42px; }
-      .volume { width: 120px; height: 5px; }
+      .card-zone { padding-bottom: 20px; }
+      .disc { --size: 100px; }
+      .disc-label { width: 40px; height: 40px; }
+      .disc-hole { width: 8px; height: 8px; }
+      .volume { width: 100px; height: 5px; }
+      .player { right: 14px; bottom: 10px; gap: 8px; }
     }
 
     @media (max-width: 620px) {
-      .stage { flex-direction: column; gap: 18px; padding: 6px 16px 3vh; }
+      .hero { padding-top: clamp(58px, 8vh, 92px); }
+      .card-zone { padding: 6px 16px 150px; }
       .card { padding: 2px 18px; }
       .row { padding: 12px 0; }
       .avatar-wrap { width: 112px; height: 112px; }
-      #status-dot { width: 25px; height: 25px; border-width: 4px; right: 3px; bottom: 4px; }
-      /* bubble above avatar, centered — no sideways overflow */
+      #status-dot { width: 25px; height: 25px; border-width: 4px; right: 1px; bottom: 2px; }
+      /* bubble above avatar, centered — never clipped thanks to hero top padding */
       .thought {
-        top: -52px;
+        top: -50px;
         right: auto;
         left: 50%;
         transform: translateX(-50%);
       }
       .t-inner { padding: 7px 13px; }
       .t-label { font-size: 0.75rem; }
-      .disc { --size: 118px; }
-      .disc-label { width: 46px; height: 46px; }
-      .volume { width: 150px; }
+      .disc { --size: 96px; }
+      .disc-label { width: 38px; height: 38px; }
+      .disc-hole { width: 7px; height: 7px; }
+      .volume { width: 110px; }
+      .player { right: 12px; bottom: 10px; }
       .secret { width: 100%; height: 42px; }
+      .meme-box { width: min(560px, 94vw); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -643,7 +754,25 @@
     <div class="avatar-wrap">
       <img id="avatar" alt="Discord avatar" />
       <img id="decoration" alt="" />
-      <span id="status-dot"></span>
+
+      <!-- status badge: Discord-style shapes + hover tooltip -->
+      <span id="status-dot" class="status-offline" aria-hidden="true">
+        <svg class="status-icon icon-online" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="10" fill="#23a55a"/>
+        </svg>
+        <svg class="status-icon icon-idle" viewBox="0 0 20 20">
+          <mask id="idleM"><rect width="20" height="20" fill="#fff"/><circle cx="13" cy="6" r="7.5" fill="#000"/></mask>
+          <circle cx="10" cy="10" r="10" fill="#f0b232" mask="url(#idleM)"/>
+        </svg>
+        <svg class="status-icon icon-dnd" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="10" fill="#f23f43"/>
+          <rect x="4.5" y="8" width="11" height="4" rx="2" fill="#fff"/>
+        </svg>
+        <svg class="status-icon icon-offline" viewBox="0 0 20 20">
+          <circle cx="10" cy="10" r="7.75" fill="none" stroke="#80848e" stroke-width="4.5"/>
+        </svg>
+        <span class="status-tip" id="status-tip">Offline</span>
+      </span>
 
       <!-- thought bubble = custom status -->
       <div class="thought" aria-live="polite">
@@ -656,8 +785,8 @@
     <div class="profile-name" id="display-name">-FuNwy_</div>
   </header>
 
-  <!-- ===== STAGE — INFO CARD (left) + CD PLAYER (right) ===== -->
-  <div class="stage">
+  <!-- ===== INFO CARD — centered ===== -->
+  <div class="card-zone">
     <section class="card">
       <div class="row">
         <span class="row-label">Name</span>
@@ -694,19 +823,29 @@
         </span>
       </div>
     </section>
-
-    <!-- Hand-drawn spinning CD: click to play/pause, slider below for volume -->
-    <div class="player">
-      <button class="disc" id="disc" type="button" aria-pressed="false" aria-label="Play or pause music">
-        <span class="disc-label"><img id="disc-img" alt="" /></span>
-        <span class="disc-hole"></span>
-      </button>
-      <input class="volume" id="volume" type="range" min="0" max="100" value="70" style="--fill: 70%" aria-label="Music volume" />
-    </div>
   </div>
 
-  <!-- Hidden YouTube player: music for the CD player -->
+  <!-- ===== VINYL PLAYER — fixed bottom-right corner ===== -->
+  <div class="player">
+    <button class="disc" id="disc" type="button" aria-pressed="false" aria-label="Play or pause music">
+      <span class="disc-label">
+        <img id="disc-img" src="https://i.ytimg.com/vi/DkhUCvm1jQc/mqdefault.jpg" alt="" />
+      </span>
+      <span class="disc-hole"></span>
+    </button>
+    <input class="volume" id="volume" type="range" min="0" max="100" value="70" style="--fill: 70%" aria-label="Music volume" />
+  </div>
+
+  <!-- Hidden YouTube player: music for the vinyl -->
   <div id="yt-player" aria-hidden="true"></div>
+
+  <!-- Rick roll overlay: opens on locked-name click, closes when the video ends -->
+  <div class="meme" id="meme" aria-hidden="true">
+    <div class="meme-box">
+      <div id="meme-player"></div>
+      <button class="meme-close" id="meme-close" type="button" aria-label="Close">&times;</button>
+    </div>
+  </div>
 
   <script>
     /* ================================================================
@@ -784,21 +923,26 @@
     })();
 
     /* ================================================================
-       2. LOCKED NAME + CD PLAYER
+       2. LOCKED NAME + VINYL PLAYER + RICK ROLL
           - lock click: one screen shake + synthesized denied sound
-          - disc click: play/pause Better Days, disc spins while playing
+            + rick roll overlay that closes when the video ends
+          - disc click: play/pause Better Days, vinyl spins while playing
           - slider: live volume
     ================================================================ */
     (function lockAndPlayer() {
       const secret = document.getElementById("secret");
       const disc = document.getElementById("disc");
       const volume = document.getElementById("volume");
+      const meme = document.getElementById("meme");
+      const memeClose = document.getElementById("meme-close");
       let busy = false;
       let alt = false;
       let audioCtx = null;
       let ytPlayer = null;
       let wantMusic = false;
       let playing = false;
+      let memePlayer = null;
+      let memeWanted = false;
 
       /* Synthesized "access denied" sound effect — no external file needed */
       function playDenied() {
@@ -842,7 +986,45 @@
         } catch { /* audio unavailable — shake still runs */ }
       }
 
-      /* Hidden YouTube music: LAKEY INSPIRED - Better Days (1 Hour) */
+      /* ---- Rick roll overlay ---- */
+      function openMeme() {
+        meme.classList.add("open");
+        meme.setAttribute("aria-hidden", "false");
+        if (memePlayer) {
+          try {
+            memePlayer.seekTo(0, true);
+            memePlayer.playVideo();
+          } catch { /* player busy — still visible */ }
+        } else {
+          memeWanted = true;
+          createMemePlayer();
+        }
+      }
+
+      function closeMeme() {
+        meme.classList.remove("open");
+        meme.setAttribute("aria-hidden", "true");
+        try { if (memePlayer) memePlayer.pauseVideo(); } catch { /* ignore */ }
+      }
+
+      function createMemePlayer() {
+        if (memePlayer || typeof YT === "undefined" || !YT.Player) return;
+        memePlayer = new YT.Player("meme-player", {
+          videoId: "dQw4w9WgXcQ",
+          playerVars: { autoplay: 1, rel: 0, playsinline: 1, modestbranding: 1 },
+          events: {
+            onReady: (e) => { e.target.playVideo(); },
+            onStateChange: (e) => {
+              /* auto-close when the meme finishes playing */
+              if (e.data === YT.PlayerState.ENDED) closeMeme();
+            },
+          },
+        });
+      }
+
+      memeClose.addEventListener("click", closeMeme);
+
+      /* ---- Hidden YouTube music: LAKEY INSPIRED - Better Days (1 Hour) ---- */
       window.onYouTubeIframeAPIReady = function () {
         ytPlayer = new YT.Player("yt-player", {
           videoId: "DkhUCvm1jQc",
@@ -863,9 +1045,10 @@
                 wantMusic = false;
                 playMusic();
               }
+              if (memeWanted) createMemePlayer();
             },
             onStateChange: (e) => {
-              /* keep the disc spinning in sync with playback */
+              /* keep the vinyl spinning in sync with playback */
               if (e.data === YT.PlayerState.PLAYING) {
                 playing = true;
                 disc.classList.add("spinning");
@@ -917,6 +1100,7 @@
         busy = true;
 
         playDenied();
+        openMeme();
 
         document.body.classList.remove("shake-a", "shake-b");
         void document.body.offsetWidth;
@@ -929,7 +1113,7 @@
     })();
 
     /* ================================================================
-       3. DISCORD LIVE — avatar, name, thought-bubble status (Lanyard)
+       3. DISCORD LIVE — avatar, name, status badge, bubble (Lanyard)
     ================================================================ */
     (function discord() {
       const ID = "1464884102238048307";
@@ -940,16 +1124,10 @@
       const avatarEl = $("avatar");
       const decoEl = $("decoration");
       const dotEl = $("status-dot");
-      const discImg = $("disc-img");
+      const statusTip = $("status-tip");
       const thoughtLabel = $("thought-label");
       const nameEl = $("display-name");
 
-      const COLORS = {
-        online: "#23a55a",
-        idle: "#f0b232",
-        dnd: "#f23f43",
-        offline: "#80848e",
-      };
       const LABELS = {
         online: "Online",
         idle: "Idle",
@@ -969,8 +1147,10 @@
         );
 
       function setStatus(status) {
-        const color = COLORS[status] || COLORS.offline;
-        dotEl.style.background = color;
+        const key = LABELS[status] ? status : "offline";
+        dotEl.classList.remove("status-online", "status-idle", "status-dnd", "status-offline");
+        dotEl.classList.add("status-" + key);
+        statusTip.textContent = LABELS[key];
       }
 
       function defaultAvatar(id) {
@@ -1002,7 +1182,6 @@
 
         const url = avatarURL(u);
         if (avatarEl.src !== url) avatarEl.src = url;
-        if (discImg.src !== url) discImg.src = url;
         if (firstPresence) {
           document.getElementById("favicon").href = url;
           firstPresence = false;
