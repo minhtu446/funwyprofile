@@ -1750,7 +1750,23 @@
         "?latitude=10.8231&longitude=106.6297" +
         "&current=temperature_2m,weather_code,is_day" +
         "&timezone=Asia%2FHo_Chi_Minh";
+      const WX_CACHE_KEY = "funwy-weather";
       const wx = { temp: null, rainy: false, label: "", icon: "cloud" };
+      let wxFailures = 0;
+      let wxRetryTimer = null;
+
+      /* restore the last successful reading so the widget is never blank */
+      (function restoreWeather() {
+        try {
+          const c = JSON.parse(localStorage.getItem(WX_CACHE_KEY) || "null");
+          if (c && typeof c.temp === "number" && c.label) {
+            wx.temp = c.temp;
+            wx.label = c.label;
+            wx.icon = c.icon || "cloud";
+            wx.rainy = !!c.rainy;
+          }
+        } catch { /* ignore corrupted cache */ }
+      })();
 
       function wxInfo(code, isDay) {
         if (code === 0) return { label: "Clear", icon: isDay ? "sun" : "moon", rainy: false };
@@ -1769,15 +1785,23 @@
       function renderWeather() {
         iconEl.innerHTML = WX_ICONS[wx.icon] || WX_ICONS.cloud;
         tempEl.textContent = wx.temp == null ? "--°C" : wx.temp + "°C";
-        condEl.textContent = wx.label || "—";
+        condEl.textContent = wx.label || (wxFailures > 0 ? "Weather unavailable" : "Loading");
       }
 
       function fetchWeather() {
-        fetch(WX_URL)
-          .then((r) => r.json())
+        clearTimeout(wxRetryTimer);
+        const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const kill = ctrl ? setTimeout(() => ctrl.abort(), 9000) : null;
+
+        fetch(WX_URL, ctrl ? { signal: ctrl.signal, cache: "no-store" } : { cache: "no-store" })
+          .then((r) => {
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            return r.json();
+          })
           .then((d) => {
             const c = d && d.current;
-            if (!c) return;
+            if (!c || typeof c.temperature_2m !== "number") throw new Error("bad payload");
+            wxFailures = 0;
             wx.temp = Math.round(c.temperature_2m);
             const info = wxInfo(c.weather_code, c.is_day !== 0);
             wx.label = info.label;
@@ -1785,8 +1809,20 @@
             wx.rainy = info.rainy;
             renderWeather();
             refreshTheme();
+            try {
+              localStorage.setItem(WX_CACHE_KEY, JSON.stringify({
+                temp: wx.temp, label: wx.label, icon: wx.icon, rainy: wx.rainy,
+              }));
+            } catch { /* private mode */ }
           })
-          .catch(() => { /* offline — time-based themes still work */ });
+          .catch(() => {
+            /* failed — retry soon (15s / 30s / 60s), cached reading stays visible */
+            wxFailures++;
+            renderWeather();
+            const delay = wxFailures === 1 ? 15000 : wxFailures === 2 ? 30000 : 60000;
+            wxRetryTimer = setTimeout(fetchWeather, delay);
+          })
+          .finally(() => { if (kill) clearTimeout(kill); });
       }
 
       /* ---- theme control ---- */
@@ -1852,6 +1888,7 @@
       refreshTheme();
       fetchWeather();
       setInterval(fetchWeather, 600000);
+      window.addEventListener("online", fetchWeather);
     })();
   </script>
 </body>
