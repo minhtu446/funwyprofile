@@ -181,12 +181,6 @@
       position: absolute;
       left: 0;
       will-change: transform;
-      animation: drift var(--dur, 90s) linear infinite;
-      animation-delay: var(--delay, 0s);
-    }
-    @keyframes drift {
-      from { transform: translateX(-45vw); }
-      to   { transform: translateX(125vw); }
     }
 
     .par { will-change: transform; }
@@ -246,11 +240,11 @@
       position: absolute;
       right: 0;
       bottom: 2px;
-      width: 48px;
-      height: 48px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      border: 6px solid #fff;
-      background: transparent;
+      border: 5px solid #fff;
+      background: #23272f;
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
       display: flex;
       cursor: default;
@@ -261,6 +255,7 @@
       height: 100%;
       display: block;
       border-radius: 50%;
+      transform: scale(0.9);
     }
 
     .status-tip {
@@ -778,7 +773,7 @@
     @media (max-height: 640px) {
       .hero { padding-top: 36px; }
       .avatar-wrap { width: 104px; height: 104px; margin-bottom: 6px; }
-      #status-dot { width: 40px; height: 40px; border-width: 5px; right: 0; bottom: 2px; }
+      #status-dot { width: 30px; height: 30px; border-width: 4px; right: 0; bottom: 2px; }
       .thought { top: -28px; right: -62px; }
       .t-inner { padding: 6px 12px; }
       .t-label { font-size: 0.74rem; }
@@ -805,7 +800,7 @@
       .card { padding: 2px 18px; }
       .row { padding: 12px 0; }
       .avatar-wrap { width: 112px; height: 112px; }
-      #status-dot { width: 40px; height: 40px; border-width: 5px; right: 0; bottom: 2px; }
+      #status-dot { width: 30px; height: 30px; border-width: 4px; right: 0; bottom: 2px; }
       /* bubble above avatar, centered — never clipped thanks to hero top padding */
       .thought {
         top: -50px;
@@ -829,7 +824,6 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .cloud-wrap { animation-duration: 400s !important; }
       .avatar-wrap, .profile-name, .card, .player, .widget { animation: none; }
       .t-inner { animation: none; }
       .star { animation: none; }
@@ -1085,7 +1079,7 @@
   <script>
     /* ================================================================
        1. CLOUDS — lifelike SVG (turbulence edges), 3 depth layers,
-          phase-offset drift so they never repeat in sync
+          pre-spread at load + endless respawn of brand-new clouds
     ================================================================ */
     (function makeClouds() {
       function mulberry32(seed) {
@@ -1101,6 +1095,16 @@
       const NS = "http://www.w3.org/2000/svg";
       const parallaxItems = [];
 
+      /* drift range in vw — wholly off-screen left -> wholly off-screen right */
+      const X_MIN = -45;
+      const X_MAX = 125;
+      const SPAN = X_MAX - X_MIN;
+
+      const reduced =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const SPEED = reduced ? 0.12 : 1;
+
       /* 3 depth layers, evenly spread in vertical bands so the sky
          never looks clumped or empty */
       const LAYERS = [
@@ -1114,24 +1118,30 @@
           wMin: 210, wMax: 380, opMin: 0.9,  opMax: 1,
           durMin: 55, durMax: 115, depth: 0.16, topMin: 12, topMax: 68 },
       ];
-      const TOTAL = LAYERS.reduce((s, l) => s + l.count, 0);
-      let order = 0;
+
+      const clouds = [];
+
+      /* every property that makes a cloud unique — re-rolled on respawn
+         so the sky never repeats the same cloud twice */
+      function randomize(c) {
+        const cfg = c.cfg;
+        const w = Math.round(cfg.wMin + rand() * (cfg.wMax - cfg.wMin));
+        const dur = cfg.durMin + rand() * (cfg.durMax - cfg.durMin);
+        c.speed = SPAN / dur; /* vw per second */
+        /* stratified vertical band — keeps coverage even forever */
+        const top = cfg.topMin + c.band * (c.bandIndex + 0.15 + rand() * 0.7);
+        c.wrap.style.top = top.toFixed(1) + "%";
+        c.svg.style.setProperty("--w", w + "px");
+        c.svg.style.setProperty("--op", (cfg.opMin + rand() * (cfg.opMax - cfg.opMin)).toFixed(2));
+        c.svg.style.setProperty("--bob", (6 + rand() * 5).toFixed(1) + "s");
+        c.use.setAttribute("href", "#" + cfg.symbols[Math.floor(rand() * cfg.symbols.length)]);
+      }
 
       LAYERS.forEach((cfg) => {
         const band = (cfg.topMax - cfg.topMin) / cfg.count;
         for (let i = 0; i < cfg.count; i++) {
-          const w   = Math.round(cfg.wMin + rand() * (cfg.wMax - cfg.wMin));
-          const dur = Math.round(cfg.durMin + rand() * (cfg.durMax - cfg.durMin));
-
           const wrap = document.createElement("div");
           wrap.className = "cloud-wrap " + cfg.name;
-          wrap.style.setProperty("--dur", dur + "s");
-          /* evenly spread phases so clouds never bunch up */
-          const phase = (order / TOTAL + rand() * 0.03 - 0.015 + 1) % 1;
-          wrap.style.setProperty("--delay", (-phase * dur).toFixed(1) + "s");
-          /* stratified vertical bands — even coverage, tiny jitter */
-          const top = cfg.topMin + band * (i + 0.15 + rand() * 0.7);
-          wrap.style.top = top.toFixed(1) + "%";
           wrap.style.zIndex = cfg.name === "near" ? 3 : cfg.name === "mid" ? 2 : 1;
 
           const par = document.createElement("div");
@@ -1141,20 +1151,43 @@
           const svg = document.createElementNS(NS, "svg");
           svg.setAttribute("viewBox", "0 0 220 140");
           svg.classList.add("cloud-svg");
-          svg.style.setProperty("--w", w + "px");
-          svg.style.setProperty("--op", (cfg.opMin + rand() * (cfg.opMax - cfg.opMin)).toFixed(2));
-          svg.style.setProperty("--bob", (6 + rand() * 5).toFixed(1) + "s");
 
           const use = document.createElementNS(NS, "use");
-          use.setAttribute("href", "#" + cfg.symbols[Math.floor(rand() * cfg.symbols.length)]);
           svg.appendChild(use);
-
           par.appendChild(svg);
           wrap.appendChild(par);
           layer.appendChild(wrap);
-          order++;
+
+          const c = { wrap, svg, use, cfg, band, bandIndex: i, x: 0, speed: 1 };
+          randomize(c);
+          clouds.push(c);
         }
       });
+
+      /* the sky is already full at load: spread the clouds evenly across
+         the whole pass range instead of stacking them at the left edge */
+      clouds.forEach((c, i) => {
+        c.x = X_MIN + ((i + rand() * 0.5) / clouds.length) * SPAN;
+        c.wrap.style.transform = "translateX(" + c.x.toFixed(2) + "vw)";
+      });
+
+      /* drift engine — a cloud that leaves the right edge re-enters from
+         the left as a brand-new cloud (new shape, size, height, speed) */
+      let lastT = 0;
+      function frame(t) {
+        const dt = lastT ? Math.min((t - lastT) / 1000, 0.1) : 0;
+        lastT = t;
+        for (const c of clouds) {
+          c.x += c.speed * SPEED * dt;
+          if (c.x > X_MAX) {
+            c.x = X_MIN - rand() * 18; /* slight random gap, never bunched */
+            randomize(c);
+          }
+          c.wrap.style.transform = "translateX(" + c.x.toFixed(2) + "vw)";
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
 
       /* Parallax on scroll (kept for tall screens) */
       let ticking = false;
@@ -1435,7 +1468,7 @@
       /* One icon only — swapped per status, Discord-style shapes */
       const ICONS = {
         online: '<circle cx="10" cy="10" r="10" fill="#23a55a"/>',
-        idle: '<mask id="idleM"><rect width="20" height="20" fill="#fff"/><circle cx="13" cy="6" r="7.5" fill="#000"/></mask><circle cx="10" cy="10" r="10" fill="#f0b232" mask="url(#idleM)"/>',
+        idle: '<mask id="idleM"><rect width="20" height="20" fill="#fff"/><circle cx="7" cy="14" r="7.5" fill="#000"/></mask><circle cx="10" cy="10" r="10" fill="#f0b232" mask="url(#idleM)"/>',
         dnd: '<circle cx="10" cy="10" r="10" fill="#f23f43"/><rect x="4.5" y="8" width="11" height="4" rx="2" fill="#fff"/>',
         offline: '<circle cx="10" cy="10" r="7.75" fill="none" stroke="#80848e" stroke-width="4.5"/>',
       };
