@@ -42,7 +42,7 @@
       flex-direction: column;
     }
 
-    /* ============ SKY — soft, harmonious ============ */
+    /* ============ SKY — time & weather themes ============ */
     .sky {
       position: fixed;
       inset: 0;
@@ -56,6 +56,112 @@
       overflow: hidden;
     }
 
+    .sky-base,
+    .sky-next {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg,
+        #8fc4f3 0%,
+        #a9d3f7 30%,
+        #cfe6fa 55%,
+        #ecf4fb 78%,
+        #fdf8f0 100%);
+    }
+    .sky-next { opacity: 0; transition: opacity 0.95s ease; }
+
+    /* stars — only at night */
+    .stars {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: #eaf4ff;
+      opacity: 0.7;
+      animation: twinkle 3s ease-in-out infinite alternate;
+    }
+    .star.big {
+      width: 3px;
+      height: 3px;
+      box-shadow: 0 0 6px 1px rgba(220, 240, 255, 0.8);
+    }
+    @keyframes twinkle {
+      from { opacity: 0.2; }
+      to   { opacity: 0.95; }
+    }
+    body[data-theme="night"] .stars { opacity: 1; }
+
+    /* crescent moon — only at night */
+    .moon {
+      position: absolute;
+      top: 9%;
+      right: 13%;
+      width: 58px;
+      height: 58px;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+      filter: drop-shadow(0 0 20px rgba(255, 248, 220, 0.35));
+      pointer-events: none;
+    }
+    body[data-theme="night"] .moon { opacity: 1; }
+
+    /* rain streaks — only in the rain theme */
+    .rain {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.2s ease;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 4;
+    }
+    body[data-theme="rain"] .rain { opacity: 1; }
+    .drop {
+      position: absolute;
+      top: -30px;
+      width: 1.5px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(220, 235, 250, 0.7));
+      border-radius: 2px;
+      transform: rotate(8deg);
+      animation: fall linear infinite;
+    }
+    @keyframes fall {
+      to { transform: translateY(108vh) rotate(8deg); }
+    }
+
+    /* night readability */
+    body[data-theme="night"] {
+      --glass: rgba(22, 36, 60, 0.55);
+      --glass-border: rgba(150, 190, 235, 0.3);
+    }
+    body[data-theme="night"] .profile-name {
+      color: #eef5ff;
+      text-shadow: 0 2px 18px rgba(8, 16, 32, 0.65);
+    }
+    body[data-theme="night"] .card,
+    body[data-theme="night"] .widget { color: #e8f1fc; }
+    body[data-theme="night"] .row-label,
+    body[data-theme="night"] .w-date,
+    body[data-theme="night"] .w-cond { color: rgba(210, 228, 250, 0.72); }
+    body[data-theme="night"] .row-value { color: #eaf3ff; }
+    body[data-theme="night"] .w-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(150, 190, 235, 0.3);
+      color: #cfe2f7;
+    }
+    body[data-theme="night"] .w-btn:hover { background: rgba(255, 255, 255, 0.18); }
+    body[data-theme="night"] .w-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
     .haze {
       position: absolute;
       left: 0; right: 0; bottom: -12%;
@@ -65,7 +171,11 @@
       pointer-events: none;
     }
 
-    .cloud-layer { position: absolute; inset: 0; }
+    .cloud-layer {
+      position: absolute;
+      inset: 0;
+      transition: filter 1.2s ease;
+    }
 
     .cloud-wrap {
       position: absolute;
@@ -89,7 +199,7 @@
       filter: drop-shadow(0 20px 26px rgba(96, 140, 190, 0.18));
       animation: bob var(--bob, 8s) ease-in-out infinite alternate;
     }
-    .far .cloud-svg { filter: blur(3.5px); }
+    .far .cloud-svg { filter: blur(4px); }
     @keyframes bob {
       from { transform: translateY(0); }
       to   { transform: translateY(-10px); }
@@ -136,14 +246,15 @@
       position: absolute;
       right: 0;
       bottom: 2px;
-      width: 40px;
-      height: 40px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       border: 6px solid #fff;
       background: transparent;
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
       display: flex;
       cursor: default;
+      z-index: 5;
     }
     #status-dot svg {
       width: 100%;
@@ -151,11 +262,6 @@
       display: block;
       border-radius: 50%;
     }
-    .status-icon { display: none; }
-    .status-online .icon-online,
-    .status-idle .icon-idle,
-    .status-dnd .icon-dnd,
-    .status-offline .icon-offline { display: block; }
 
     .status-tip {
       position: absolute;
@@ -352,6 +458,79 @@
       box-shadow: 0 10px 22px rgba(61, 134, 240, 0.22);
     }
     .secret:active { transform: scale(0.98); }
+
+    /* ============ WEATHER & THEME WIDGET — bottom-left ============ */
+    .widget {
+      position: fixed;
+      left: 16px;
+      bottom: 14px;
+      z-index: 30;
+      width: 196px;
+      padding: 12px 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 16px 40px rgba(70, 110, 165, 0.18);
+      animation: floatIn 1s 0.5s cubic-bezier(.2,.7,.2,1) both;
+    }
+    .w-clock {
+      font-size: 1.42rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .w-date {
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: var(--ink-soft);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .w-weather {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 8px;
+      min-width: 0;
+    }
+    .w-weather svg { width: 22px; height: 22px; flex: none; display: block; }
+    .w-temp { font-weight: 800; font-size: 0.94rem; flex: none; }
+    .w-cond {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .w-themes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .w-btn {
+      border: 1px solid rgba(61, 134, 240, 0.25);
+      background: rgba(255, 255, 255, 0.55);
+      color: var(--ink-soft);
+      font: inherit;
+      font-size: 0.63rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .w-btn:hover { background: rgba(61, 134, 240, 0.12); }
+    .w-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
 
     /* ============ VINYL PLAYER — fixed bottom-right corner ============ */
     .player {
@@ -599,7 +778,7 @@
     @media (max-height: 640px) {
       .hero { padding-top: 36px; }
       .avatar-wrap { width: 104px; height: 104px; margin-bottom: 6px; }
-      #status-dot { width: 34px; height: 34px; border-width: 5px; right: 0; bottom: 2px; }
+      #status-dot { width: 40px; height: 40px; border-width: 5px; right: 0; bottom: 2px; }
       .thought { top: -28px; right: -62px; }
       .t-inner { padding: 6px 12px; }
       .t-label { font-size: 0.74rem; }
@@ -613,6 +792,11 @@
       .disc-hole { width: 8px; height: 8px; }
       .volume { width: 100px; height: 5px; }
       .player { right: 14px; bottom: 10px; gap: 8px; }
+      .widget { left: 12px; bottom: 10px; width: 172px; padding: 9px 11px; }
+      .w-clock { font-size: 1.1rem; }
+      .w-date { font-size: 0.6rem; }
+      .w-themes { margin-top: 7px; gap: 4px; }
+      .w-btn { font-size: 0.58rem; padding: 3px 7px; }
     }
 
     @media (max-width: 620px) {
@@ -621,7 +805,7 @@
       .card { padding: 2px 18px; }
       .row { padding: 12px 0; }
       .avatar-wrap { width: 112px; height: 112px; }
-      #status-dot { width: 34px; height: 34px; border-width: 5px; right: 0; bottom: 2px; }
+      #status-dot { width: 40px; height: 40px; border-width: 5px; right: 0; bottom: 2px; }
       /* bubble above avatar, centered — never clipped thanks to hero top padding */
       .thought {
         top: -50px;
@@ -638,12 +822,17 @@
       .player { right: 12px; bottom: 10px; }
       .secret { width: 100%; height: 42px; }
       .meme-box { width: min(560px, 94vw); }
+      .widget { left: 12px; bottom: 10px; width: 168px; padding: 9px 11px; }
+      .w-clock { font-size: 1.1rem; }
+      .w-themes { margin-top: 7px; gap: 4px; }
+      .w-btn { font-size: 0.58rem; padding: 3px 7px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       .cloud-wrap { animation-duration: 400s !important; }
-      .avatar-wrap, .profile-name, .card, .player { animation: none; }
+      .avatar-wrap, .profile-name, .card, .player, .widget { animation: none; }
       .t-inner { animation: none; }
+      .star { animation: none; }
       body.shake-a, body.shake-b { animation: none; }
     }
   </style>
@@ -665,9 +854,9 @@
       </linearGradient>
 
       <filter id="cloudFx" x="-30%" y="-30%" width="160%" height="160%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="7" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G" result="d"/>
-        <feGaussianBlur in="d" stdDeviation="0.9"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.009 0.016" numOctaves="4" seed="7" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feGaussianBlur in="d" stdDeviation="1.1"/>
       </filter>
 
       <linearGradient id="fadeGrad" x1="0" y1="0" x2="0" y2="1">
@@ -696,6 +885,8 @@
           <ellipse cx="56"  cy="84"  rx="14" ry="8"  fill="#ffffff" opacity="0.85"/>
           <ellipse cx="158" cy="84"  rx="13" ry="7"  fill="#ffffff" opacity="0.8"/>
           <ellipse cx="140" cy="66"  rx="10" ry="6"  fill="#ffffff" opacity="0.8"/>
+          <ellipse cx="118" cy="34"  rx="20" ry="8"  fill="#ffffff" opacity="0.9"/>
+          <ellipse cx="90"  cy="96"  rx="16" ry="6"  fill="#ffffff" opacity="0.5"/>
         </g>
       </symbol>
 
@@ -715,6 +906,8 @@
           <ellipse cx="90"  cy="44"  rx="11" ry="6"  fill="#ffffff" opacity="0.85"/>
           <ellipse cx="68"  cy="70"  rx="13" ry="7"  fill="#ffffff" opacity="0.8"/>
           <ellipse cx="148" cy="66"  rx="14" ry="8"  fill="#ffffff" opacity="0.85"/>
+          <ellipse cx="104" cy="20"  rx="14" ry="7"  fill="#ffffff" opacity="0.9"/>
+          <ellipse cx="132" cy="40"  rx="10" ry="5"  fill="#ffffff" opacity="0.75"/>
         </g>
       </symbol>
 
@@ -752,7 +945,14 @@
 
   <!-- ===== SKY ===== -->
   <div class="sky" aria-hidden="true">
+    <div class="sky-base" id="sky-base"></div>
+    <div class="sky-next" id="sky-next"></div>
+    <div class="stars" id="stars"></div>
+    <svg class="moon" viewBox="0 0 64 64">
+      <path d="M46 6a26 26 0 1 0 12 44 20 20 0 1 1-12-44z" fill="#f7f2df"/>
+    </svg>
     <div class="cloud-layer" id="clouds"></div>
+    <div class="rain" id="rain"></div>
     <div class="haze"></div>
   </div>
 
@@ -762,20 +962,9 @@
       <img id="avatar" alt="Discord avatar" />
       <img id="decoration" alt="" />
 
-      <!-- status badge: Discord-style shapes + hover tooltip -->
-      <span id="status-dot" class="status-offline" aria-hidden="true">
-        <svg class="status-icon icon-online" viewBox="0 0 20 20">
-          <circle cx="10" cy="10" r="10" fill="#23a55a"/>
-        </svg>
-        <svg class="status-icon icon-idle" viewBox="0 0 20 20">
-          <mask id="idleM"><rect width="20" height="20" fill="#fff"/><circle cx="13" cy="6" r="7.5" fill="#000"/></mask>
-          <circle cx="10" cy="10" r="10" fill="#f0b232" mask="url(#idleM)"/>
-        </svg>
-        <svg class="status-icon icon-dnd" viewBox="0 0 20 20">
-          <circle cx="10" cy="10" r="10" fill="#f23f43"/>
-          <rect x="4.5" y="8" width="11" height="4" rx="2" fill="#fff"/>
-        </svg>
-        <svg class="status-icon icon-offline" viewBox="0 0 20 20">
+      <!-- status badge: Discord-style shape + hover tooltip (single icon, swapped by JS) -->
+      <span id="status-dot" aria-hidden="true">
+        <svg id="status-icon" viewBox="0 0 20 20">
           <circle cx="10" cy="10" r="7.75" fill="none" stroke="#80848e" stroke-width="4.5"/>
         </svg>
         <span class="status-tip" id="status-tip">Offline</span>
@@ -831,6 +1020,25 @@
       </div>
     </section>
   </div>
+
+  <!-- ===== BOTTOM-LEFT WIDGET — Vietnam clock, weather, theme ===== -->
+  <aside class="widget" aria-label="Vietnam time, weather and background theme">
+    <div class="w-clock" id="w-clock">--:--:--</div>
+    <div class="w-date" id="w-date">Ho Chi Minh City</div>
+    <div class="w-weather">
+      <span id="w-icon" aria-hidden="true"></span>
+      <span class="w-temp" id="w-temp">--°C</span>
+      <span class="w-cond" id="w-cond">Loading</span>
+    </div>
+    <div class="w-themes" role="group" aria-label="Background theme">
+      <button class="w-btn" type="button" data-t="auto">Auto</button>
+      <button class="w-btn" type="button" data-t="morning">Morning</button>
+      <button class="w-btn" type="button" data-t="afternoon">Afternoon</button>
+      <button class="w-btn" type="button" data-t="evening">Evening</button>
+      <button class="w-btn" type="button" data-t="night">Night</button>
+      <button class="w-btn" type="button" data-t="rain">Rain</button>
+    </div>
+  </aside>
 
   <!-- ===== VINYL PLAYER — fixed bottom-right corner ===== -->
   <div class="player">
@@ -1168,7 +1376,7 @@
       const $ = (id) => document.getElementById(id);
       const avatarEl = $("avatar");
       const decoEl = $("decoration");
-      const dotEl = $("status-dot");
+      const statusIcon = $("status-icon");
       const statusTip = $("status-tip");
       const thoughtEl = $("thought");
       const thoughtLabel = $("thought-label");
@@ -1192,10 +1400,20 @@
           '<text x="64" y="86" font-family="Arial" font-size="64" font-weight="bold" fill="#fff" text-anchor="middle">F</text></svg>'
         );
 
+      /* One icon only — swapped per status, Discord-style shapes */
+      const ICONS = {
+        online: '<circle cx="10" cy="10" r="10" fill="#23a55a"/>',
+        idle: '<mask id="idleM"><rect width="20" height="20" fill="#fff"/><circle cx="13" cy="6" r="7.5" fill="#000"/></mask><circle cx="10" cy="10" r="10" fill="#f0b232" mask="url(#idleM)"/>',
+        dnd: '<circle cx="10" cy="10" r="10" fill="#f23f43"/><rect x="4.5" y="8" width="11" height="4" rx="2" fill="#fff"/>',
+        offline: '<circle cx="10" cy="10" r="7.75" fill="none" stroke="#80848e" stroke-width="4.5"/>',
+      };
+
       function setStatus(status) {
         const key = LABELS[status] ? status : "offline";
-        dotEl.classList.remove("status-online", "status-idle", "status-dnd", "status-offline");
-        dotEl.classList.add("status-" + key);
+        if (statusIcon.dataset.status !== key) {
+          statusIcon.innerHTML = ICONS[key];
+          statusIcon.dataset.status = key;
+        }
         statusTip.textContent = LABELS[key];
       }
 
@@ -1300,6 +1518,210 @@
       }
 
       connect();
+    })();
+
+    /* ================================================================
+       4. SKY THEMES — Vietnam clock, HCMC weather, background control
+    ================================================================ */
+    (function skyWeather() {
+      const THEMES = {
+        morning: {
+          sky: "linear-gradient(180deg, #8fc4f3 0%, #a9d3f7 30%, #cfe6fa 55%, #ecf4fb 78%, #fdf8f0 100%)",
+          cloudFilter: "none",
+        },
+        afternoon: {
+          sky: "linear-gradient(180deg, #62aef4 0%, #8fcafa 32%, #c2e5fd 58%, #edf7ff 80%, #fdf7ec 100%)",
+          cloudFilter: "brightness(1.04)",
+        },
+        evening: {
+          sky: "linear-gradient(180deg, #6873b8 0%, #a58ac7 28%, #e6a68c 58%, #f6c8a2 78%, #fde9d0 100%)",
+          cloudFilter: "sepia(0.3) brightness(0.9) hue-rotate(-12deg)",
+        },
+        night: {
+          sky: "linear-gradient(180deg, #0a1830 0%, #122c52 35%, #1d4370 62%, #2c5a86 82%, #3b6d97 100%)",
+          cloudFilter: "brightness(0.42) saturate(0.65)",
+        },
+        rain: {
+          sky: "linear-gradient(180deg, #5d6d7d 0%, #7b8a98 35%, #9eacb7 60%, #c2ccd4 82%, #dce3e7 100%)",
+          cloudFilter: "grayscale(0.55) brightness(0.8)",
+        },
+      };
+
+      /* Self-drawn weather icons (English labels, no emoji) */
+      const WX_ICONS = {
+        sun: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="4.4" fill="#f0b232"/><g stroke="#f0b232" stroke-width="1.8" stroke-linecap="round"><path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/></g></svg>',
+        moon: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="#e6d98a"/></svg>',
+        cloud: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 18h10a4 4 0 0 0 .9-7.9 5.5 5.5 0 0 0-10.7-.7A4.3 4.3 0 0 0 7 18z" fill="#9fb3c8"/></svg>',
+        partly: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="9" cy="8.6" r="3.3" fill="#f0b232"/><path d="M11.4 19h6.6a3.2 3.2 0 0 0 .7-6.3 4.4 4.4 0 0 0-8.4-1.3A3.5 3.5 0 0 0 11.4 19z" fill="#b9c9d8"/></svg>',
+        moonCloud: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M15.5 4.2a5.6 5.6 0 0 0 3 7.6A6.5 6.5 0 1 1 15.5 4.2z" fill="#e6d98a"/><path d="M11.4 19h6.6a3.2 3.2 0 0 0 .7-6.3 4.4 4.4 0 0 0-8.4-1.3A3.5 3.5 0 0 0 11.4 19z" fill="#a8bbc9"/></svg>',
+        rain: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 14.5h10a4 4 0 0 0 .9-7.9 5.5 5.5 0 0 0-10.7-.7A4.3 4.3 0 0 0 7 14.5z" fill="#9fb3c8"/><g stroke="#5aa7e8" stroke-width="1.8" stroke-linecap="round"><path d="M9 17.5l-1 2.4M12.5 17.5l-1 2.4M16 17.5l-1 2.4"/></g></svg>',
+        storm: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M7 14h10a4 4 0 0 0 .9-7.9 5.5 5.5 0 0 0-10.7-.7A4.3 4.3 0 0 0 7 14z" fill="#8a9dae"/><path d="M13 15l-2.6 3.8h2.2L11.2 22l3.8-4.2h-2.2l1.2-2.8z" fill="#f0c04a"/></svg>',
+      };
+
+      const skyBase = document.getElementById("sky-base");
+      const skyNext = document.getElementById("sky-next");
+      const cloudsEl = document.getElementById("clouds");
+      const starsEl = document.getElementById("stars");
+      const rainEl = document.getElementById("rain");
+      const clockEl = document.getElementById("w-clock");
+      const dateEl = document.getElementById("w-date");
+      const iconEl = document.getElementById("w-icon");
+      const tempEl = document.getElementById("w-temp");
+      const condEl = document.getElementById("w-cond");
+      const buttons = Array.from(document.querySelectorAll(".w-btn"));
+
+      /* ---- stars & rain decoration ---- */
+      for (let i = 0; i < 110; i++) {
+        const s = document.createElement("i");
+        const big = Math.random() < 0.12;
+        s.className = "star" + (big ? " big" : "");
+        s.style.left = (Math.random() * 100).toFixed(2) + "%";
+        s.style.top = (Math.random() * 62).toFixed(2) + "%";
+        s.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
+        s.style.animationDuration = (2.5 + Math.random() * 3.5).toFixed(2) + "s";
+        starsEl.appendChild(s);
+      }
+      for (let i = 0; i < 42; i++) {
+        const d = document.createElement("i");
+        d.className = "drop";
+        d.style.left = (Math.random() * 100).toFixed(2) + "%";
+        d.style.height = Math.round(14 + Math.random() * 14) + "px";
+        d.style.opacity = (0.25 + Math.random() * 0.35).toFixed(2);
+        d.style.animationDelay = (Math.random() * 1.6).toFixed(2) + "s";
+        d.style.animationDuration = (0.75 + Math.random() * 0.7).toFixed(2) + "s";
+        rainEl.appendChild(d);
+      }
+
+      /* ---- Vietnam clock (always UTC+7) ---- */
+      const timeFmt = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Ho_Chi_Minh",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hourCycle: "h23",
+      });
+      const dateFmt = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Ho_Chi_Minh",
+        weekday: "short", day: "2-digit", month: "short",
+      });
+      const hourFmt = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Ho_Chi_Minh",
+        hour: "2-digit", hourCycle: "h23",
+      });
+
+      function vnHour() {
+        return Number(hourFmt.format(new Date()));
+      }
+      function tickClock() {
+        clockEl.textContent = timeFmt.format(new Date());
+        dateEl.textContent = dateFmt.format(new Date());
+      }
+
+      /* ---- weather: Ho Chi Minh City via Open-Meteo (free, no key) ---- */
+      const WX_URL = "https://api.open-meteo.com/v1/forecast" +
+        "?latitude=10.8231&longitude=106.6297" +
+        "&current=temperature_2m,weather_code,is_day" +
+        "&timezone=Asia%2FHo_Chi_Minh";
+      const wx = { temp: null, rainy: false, label: "", icon: "cloud" };
+
+      function wxInfo(code, isDay) {
+        if (code === 0) return { label: "Clear", icon: isDay ? "sun" : "moon", rainy: false };
+        if (code === 1 || code === 2) return { label: "Partly cloudy", icon: isDay ? "partly" : "moonCloud", rainy: false };
+        if (code === 3) return { label: "Overcast", icon: "cloud", rainy: false };
+        if (code === 45 || code === 48) return { label: "Fog", icon: "cloud", rainy: false };
+        if (code >= 51 && code <= 57) return { label: "Drizzle", icon: "rain", rainy: true };
+        if (code >= 61 && code <= 67) return { label: "Rain", icon: "rain", rainy: true };
+        if (code >= 71 && code <= 77) return { label: "Snow", icon: "rain", rainy: true };
+        if (code >= 80 && code <= 82) return { label: "Showers", icon: "rain", rainy: true };
+        if (code >= 85 && code <= 86) return { label: "Snow showers", icon: "rain", rainy: true };
+        if (code >= 95) return { label: "Thunderstorm", icon: "storm", rainy: true };
+        return { label: "—", icon: "cloud", rainy: false };
+      }
+
+      function renderWeather() {
+        iconEl.innerHTML = WX_ICONS[wx.icon] || WX_ICONS.cloud;
+        tempEl.textContent = wx.temp == null ? "--°C" : wx.temp + "°C";
+        condEl.textContent = wx.label || "—";
+      }
+
+      function fetchWeather() {
+        fetch(WX_URL)
+          .then((r) => r.json())
+          .then((d) => {
+            const c = d && d.current;
+            if (!c) return;
+            wx.temp = Math.round(c.temperature_2m);
+            const info = wxInfo(c.weather_code, c.is_day !== 0);
+            wx.label = info.label;
+            wx.icon = info.icon;
+            wx.rainy = info.rainy;
+            renderWeather();
+            refreshTheme();
+          })
+          .catch(() => { /* offline — time-based themes still work */ });
+      }
+
+      /* ---- theme control ---- */
+      const SAVE_KEY = "funwy-theme";
+      let mode = "auto";
+      try { mode = localStorage.getItem(SAVE_KEY) || "auto"; } catch { mode = "auto"; }
+      if (mode !== "auto" && !THEMES[mode]) mode = "auto";
+
+      let currentTheme = "";
+      let fadeTimer = null;
+
+      function autoTheme() {
+        const h = vnHour();
+        if (wx.rainy) return "rain";
+        if (h >= 5 && h < 12) return "morning";
+        if (h >= 12 && h < 17) return "afternoon";
+        if (h >= 17 && h < 20) return "evening";
+        return "night";
+      }
+      function activeTheme() {
+        return mode === "auto" ? autoTheme() : mode;
+      }
+
+      function applyTheme(name) {
+        if (!THEMES[name] || name === currentTheme) return;
+        currentTheme = name;
+        document.body.dataset.theme = name;
+        skyNext.style.background = THEMES[name].sky;
+        skyNext.style.opacity = "1";
+        cloudsEl.style.filter = THEMES[name].cloudFilter;
+        clearTimeout(fadeTimer);
+        fadeTimer = setTimeout(() => {
+          skyBase.style.background = THEMES[name].sky;
+          skyNext.style.opacity = "0";
+        }, 980);
+      }
+
+      function markActive() {
+        buttons.forEach((b) => {
+          b.classList.toggle("active", b.dataset.t === mode);
+        });
+      }
+      function refreshTheme() {
+        applyTheme(activeTheme());
+        markActive();
+      }
+
+      buttons.forEach((b) => {
+        b.addEventListener("click", () => {
+          mode = b.dataset.t;
+          try { localStorage.setItem(SAVE_KEY, mode); } catch { /* private mode */ }
+          refreshTheme();
+        });
+      });
+
+      /* ---- boot ---- */
+      tickClock();
+      setInterval(() => {
+        tickClock();
+        if (mode === "auto") refreshTheme();
+      }, 1000);
+      renderWeather();
+      refreshTheme();
+      fetchWeather();
+      setInterval(fetchWeather, 600000);
     })();
   </script>
 </body>
