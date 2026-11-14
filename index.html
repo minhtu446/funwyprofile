@@ -868,6 +868,13 @@
         <rect x="0" y="0" width="220" height="140" fill="url(#fadeGrad)"/>
       </mask>
 
+      <!-- Wispy filter for thin high-altitude cirrus -->
+      <filter id="wispFx" x="-20%" y="-60%" width="140%" height="220%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.01 0.05" numOctaves="3" seed="11" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="12" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feGaussianBlur in="d" stdDeviation="2.2"/>
+      </filter>
+
       <!-- Cloud A — classic cumulus -->
       <symbol id="cloud-a" viewBox="0 0 220 140">
         <g filter="url(#cloudFx)" mask="url(#cloudMask)">
@@ -938,6 +945,17 @@
           <ellipse cx="112" cy="120" rx="26" ry="6"  fill="#8fb0d3" opacity="0.35"/>
           <ellipse cx="88"  cy="64"  rx="12" ry="7"  fill="#ffffff" opacity="0.95"/>
           <ellipse cx="112" cy="78"  rx="9"  ry="5"  fill="#ffffff" opacity="0.8"/>
+        </g>
+      </symbol>
+
+      <!-- Cloud E — thin wispy cirrus (high altitude) -->
+      <symbol id="cloud-e" viewBox="0 0 220 140">
+        <g filter="url(#wispFx)">
+          <ellipse cx="60"  cy="82"  rx="52" ry="9"  fill="#ffffff" opacity="0.55"/>
+          <ellipse cx="118" cy="74"  rx="64" ry="8"  fill="#ffffff" opacity="0.5"/>
+          <ellipse cx="168" cy="86"  rx="40" ry="7"  fill="#ffffff" opacity="0.45"/>
+          <ellipse cx="96"  cy="94"  rx="58" ry="7"  fill="#f2f8fe" opacity="0.4"/>
+          <ellipse cx="140" cy="102" rx="44" ry="5"  fill="#e8f2fb" opacity="0.35"/>
         </g>
       </symbol>
     </defs>
@@ -1080,49 +1098,63 @@
       }
       const rand = mulberry32(20261112);
       const layer = document.getElementById("clouds");
-      const SYMBOLS = ["cloud-a", "cloud-b", "cloud-c", "cloud-d"];
       const NS = "http://www.w3.org/2000/svg";
       const parallaxItems = [];
-      const COUNT = 16;
 
-      for (let i = 0; i < COUNT; i++) {
-        const r = rand();
-        const L = r < 0.42 ? "far" : r < 0.76 ? "mid" : "near";
-        const cfg = {
-          far:  { wMin: 80,  wMax: 180, opMin: 0.5,  opMax: 0.68, durMin: 95,  durMax: 185, depth: 0.05, topMax: 44 },
-          mid:  { wMin: 130, wMax: 250, opMin: 0.75, opMax: 0.92, durMin: 70,  durMax: 145, depth: 0.1,  topMax: 54 },
-          near: { wMin: 200, wMax: 350, opMin: 0.9,  opMax: 1,    durMin: 55,  durMax: 115, depth: 0.16, topMax: 60 },
-        }[L];
+      /* 3 depth layers, evenly spread in vertical bands so the sky
+         never looks clumped or empty */
+      const LAYERS = [
+        { name: "far",  count: 12, symbols: ["cloud-a", "cloud-c", "cloud-d", "cloud-e"],
+          wMin: 80,  wMax: 190, opMin: 0.5,  opMax: 0.7,
+          durMin: 95, durMax: 185, depth: 0.05, topMin: 2,  topMax: 48 },
+        { name: "mid",  count: 10, symbols: ["cloud-a", "cloud-b", "cloud-c", "cloud-d"],
+          wMin: 140, wMax: 260, opMin: 0.75, opMax: 0.92,
+          durMin: 70, durMax: 145, depth: 0.1,  topMin: 6,  topMax: 60 },
+        { name: "near", count: 6,  symbols: ["cloud-a", "cloud-b"],
+          wMin: 210, wMax: 380, opMin: 0.9,  opMax: 1,
+          durMin: 55, durMax: 115, depth: 0.16, topMin: 12, topMax: 68 },
+      ];
+      const TOTAL = LAYERS.reduce((s, l) => s + l.count, 0);
+      let order = 0;
 
-        const w   = Math.round(cfg.wMin + rand() * (cfg.wMax - cfg.wMin));
-        const dur = Math.round(cfg.durMin + rand() * (cfg.durMax - cfg.durMin));
+      LAYERS.forEach((cfg) => {
+        const band = (cfg.topMax - cfg.topMin) / cfg.count;
+        for (let i = 0; i < cfg.count; i++) {
+          const w   = Math.round(cfg.wMin + rand() * (cfg.wMax - cfg.wMin));
+          const dur = Math.round(cfg.durMin + rand() * (cfg.durMax - cfg.durMin));
 
-        const wrap = document.createElement("div");
-        wrap.className = "cloud-wrap " + L;
-        wrap.style.setProperty("--dur", dur + "s");
-        wrap.style.setProperty("--delay", (-rand() * dur).toFixed(1) + "s");
-        wrap.style.top = (2 + rand() * cfg.topMax).toFixed(1) + "%";
-        wrap.style.zIndex = L === "near" ? 3 : L === "mid" ? 2 : 1;
+          const wrap = document.createElement("div");
+          wrap.className = "cloud-wrap " + cfg.name;
+          wrap.style.setProperty("--dur", dur + "s");
+          /* evenly spread phases so clouds never bunch up */
+          const phase = (order / TOTAL + rand() * 0.03 - 0.015 + 1) % 1;
+          wrap.style.setProperty("--delay", (-phase * dur).toFixed(1) + "s");
+          /* stratified vertical bands — even coverage, tiny jitter */
+          const top = cfg.topMin + band * (i + 0.15 + rand() * 0.7);
+          wrap.style.top = top.toFixed(1) + "%";
+          wrap.style.zIndex = cfg.name === "near" ? 3 : cfg.name === "mid" ? 2 : 1;
 
-        const par = document.createElement("div");
-        par.className = "par";
-        parallaxItems.push({ el: par, depth: cfg.depth });
+          const par = document.createElement("div");
+          par.className = "par";
+          parallaxItems.push({ el: par, depth: cfg.depth });
 
-        const svg = document.createElementNS(NS, "svg");
-        svg.setAttribute("viewBox", "0 0 220 140");
-        svg.classList.add("cloud-svg");
-        svg.style.setProperty("--w", w + "px");
-        svg.style.setProperty("--op", (cfg.opMin + rand() * (cfg.opMax - cfg.opMin)).toFixed(2));
-        svg.style.setProperty("--bob", (6 + rand() * 5).toFixed(1) + "s");
+          const svg = document.createElementNS(NS, "svg");
+          svg.setAttribute("viewBox", "0 0 220 140");
+          svg.classList.add("cloud-svg");
+          svg.style.setProperty("--w", w + "px");
+          svg.style.setProperty("--op", (cfg.opMin + rand() * (cfg.opMax - cfg.opMin)).toFixed(2));
+          svg.style.setProperty("--bob", (6 + rand() * 5).toFixed(1) + "s");
 
-        const use = document.createElementNS(NS, "use");
-        use.setAttribute("href", "#" + SYMBOLS[Math.floor(rand() * SYMBOLS.length)]);
-        svg.appendChild(use);
+          const use = document.createElementNS(NS, "use");
+          use.setAttribute("href", "#" + cfg.symbols[Math.floor(rand() * cfg.symbols.length)]);
+          svg.appendChild(use);
 
-        par.appendChild(svg);
-        wrap.appendChild(par);
-        layer.appendChild(wrap);
-      }
+          par.appendChild(svg);
+          wrap.appendChild(par);
+          layer.appendChild(wrap);
+          order++;
+        }
+      });
 
       /* Parallax on scroll (kept for tall screens) */
       let ticking = false;
